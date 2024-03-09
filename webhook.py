@@ -6,8 +6,8 @@ user_id = '294610886'
 client_id = 'jIC1ZsbUkDO_E2FymKEd'
 client_secret = 'NceYZWK68aCYctPihLoBnq_7iXOQ0Jfq4nVgx5hq'
 
-webhook_url_old = 'https://f85b-78-30-242-38.ngrok-free.app'
-webhook_url = 'https://8782-78-30-242-38.ngrok-free.app'
+webhook_url_old = 'https://8782-78-30-242-38.ngrok-free.app'
+webhook_url = 'https://5bb2-78-30-242-38.ngrok-free.app'
 
 # Получение access_token
 def get_access_token():

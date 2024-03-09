@@ -78,15 +78,20 @@ async def send_message(access_token, user_id, user_chat_id, message):
 
 
 # Получение и проверка чатов
-async def get_messages(access_token, session, user_id):
+async def get_messages(access_token, session, user_id, inner_message_type):
     global last_message, user_chat_id, last_message_corrected, user_name, prev_inner_message, first_time_message
     url = f'https://api.avito.ru/messenger/v2/accounts/{user_id}/chats/{user_chat_id}'
     response = await fetch_chat(session, url)
-    if response[1].status == 200:
+    if response[0]['last_message']['direction'] == 'out':
+       return
+    elif response[1].status == 200 and response[0]['last_message']['direction'] == 'in':
         global r, json_messages
         json_str = response[0]
         print(f"{timer.strftime('%Y %H:%M:%S', timer.localtime(timer.time()))} ID: {user_chat_id}")
-        last_message = json_str['last_message']['content']['text']
+        if inner_message_type == 'text':
+          last_message = json_str['last_message']['content']['text']
+        elif inner_message_type == 'location':
+          last_message = json_str['last_message']['content']['location']['text']
         last_message_id = json_str['last_message']['id']
         print(f"Последнее сообщение: {last_message}")
         last_message_direction = json_str['last_message']['direction']
@@ -96,8 +101,12 @@ async def get_messages(access_token, session, user_id):
           user_name = json_str['users'][1]['name']
         elif last_message_direction == "out":
           user_name = json_str['users'][0]['name']
-        if last_message != json_messages[0]['messages'][0]['content']['text']:
-          pass
+        if inner_message_type == 'text':
+          if last_message != json_messages[0]['messages'][0]['content']['text']:
+            pass
+        elif inner_message_type == 'location':
+          if last_message != json_messages[0]['messages'][0]['content']['location']['text']:
+            pass
         if last_message_direction == "in":
           # Проверка пишет в первый раз или нет
           x = 0
@@ -118,13 +127,11 @@ async def get_messages(access_token, session, user_id):
               first_time_message = False
               break
             x+=1
-
-          # if first_time_message == False:
-          #   await first_time_message_send(json_messages, last_message_direction)
+            
           if first_time_message == False:
-            await get_chat_messages(json_messages[0], last_message_direction, access_token, user_id, user_chat_id)
+            await get_chat_messages(json_messages[0], last_message_direction, access_token, user_id, user_chat_id, inner_message_type)
     else:
-        print('Ошибка при получении сообщений:', response.text)
+        print('Ошибка при получении сообщений:', response)
 
 
 # Действия если пишет первый раз
@@ -153,12 +160,15 @@ async def check_intersections(greatings_triggers, inner_message_corrected):
 
 
 # Получение каждого сообщения в чате
-async def get_chat_messages(json_messages, last_message_direction, access_token, user_id, user_chat_id):
+async def get_chat_messages(json_messages, last_message_direction, access_token, user_id, user_chat_id, inner_message_type):
                 n = 0 
                 while n < len(json_messages['messages']):
                   try:
                     inner_message_direction = json_messages['messages'][n]['direction']
-                    inner_message = json_messages['messages'][n]['content']['text']
+                    if inner_message_type == 'text':
+                      inner_message = json_messages['messages'][n]['content']['text']
+                    elif inner_message_type == 'location':
+                      inner_message = json_messages['messages'][n]['content']['location']['text']
                     inner_message_corrected = await remove_punctuation(inner_message)
                     prev_inner_message = ' '
                     try:
@@ -415,7 +425,6 @@ async def fetch_messages(session, url):
         }
     async with session.get(url, headers=headers) as r:
       resp = await r.json()
-      print('appended')
       json_messages.append(resp)
       # print(json_messages)
     return 'OK'
@@ -425,20 +434,22 @@ async def fetch_messages(session, url):
 @app.route('/', methods=['POST'])
 async def main():
     global access_granted, endtime, access_token, user_chat_id
-    if request.method == 'POST' and request.json['payload']['value']['type'] == 'text':
+    if request.method == 'POST' and request.json['payload']['value']['type'] == 'text' or request.method == 'POST' and request.json['payload']['value']['type'] == 'location':
         await clear_lists()
         if access_granted == False or timer.time() > endtime:
           endtime = timer.time() + 70
           await get_access_token()
           access_granted = True
-        inner_message = request.json['payload']['value']['content']['text']
-        inner_message_id = request.json['payload']['value']['id']
-        # inner_message_type = request.json['payload']['value']['type']
+        inner_message_type = request.json['payload']['value']['type']
+        # if inner_message_type == 'text':
+        #   inner_message = request.json['payload']['value']['content']['text']
+        # elif inner_message_type == 'location':
+        #   inner_message = request.json['payload']['value']['content']['location']['text']
+        # inner_message_id = request.json['payload']['value']['id']
         user_chat_id = request.json['payload']['value']['chat_id']
         await fetch_all(f'https://api.avito.ru/messenger/v3/accounts/{user_id}/chats/{user_chat_id}/messages/')
-
         async with aiohttp.ClientSession() as session:
-          await get_messages(access_token, session, user_id)
+          await get_messages(access_token, session, user_id, inner_message_type)
 
         return 'success', 200
     else:
