@@ -23,9 +23,15 @@ yandex_apikey = "7271aeed-6ae5-46a4-bb1e-71085eec111c"
 yandex_apikey_second = "b2c1f321-85a1-4e74-9ef7-5c834e5a074e"
 
 # Настройки бота авито
-user_id = '294610886'
-client_id = 'jIC1ZsbUkDO_E2FymKEd'
-client_secret = 'NceYZWK68aCYctPihLoBnq_7iXOQ0Jfq4nVgx5hq'
+# user_id = ['294610886']
+# client_id = ['jIC1ZsbUkDO_E2FymKEd']
+# client_secret = ['NceYZWK68aCYctPihLoBnq_7iXOQ0Jfq4nVgx5hq']
+client_id = {
+   '294610886': 'jIC1ZsbUkDO_E2FymKEd'
+}
+client_secret = {
+   '294610886': 'NceYZWK68aCYctPihLoBnq_7iXOQ0Jfq4nVgx5hq'
+}
 
 # Ключи телеграм
 tg_chat_key = '-4078308477'
@@ -92,7 +98,7 @@ async def get_messages(access_token, session, user_id, inner_message_type):
           last_message = json_str['last_message']['content']['text']
         elif inner_message_type == 'location':
           last_message = json_str['last_message']['content']['location']['text']
-        last_message_id = json_str['last_message']['id']
+        # last_message_id = json_str['last_message']['id']
         print(f"Последнее сообщение: {last_message}")
         last_message_direction = json_str['last_message']['direction']
         print(f"Направление: {last_message_direction}\n")
@@ -136,8 +142,8 @@ async def get_messages(access_token, session, user_id, inner_message_type):
 
 # Действия если пишет первый раз
 async def first_time_message_send(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет')
-    print('Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет')
+    await send_message(access_token, user_id, user_chat_id, 'Здравствуйте!\nВы желаете оставить заявку на перевозку?\nПришлите мне цифру:\n1. Да\n2. Нет')
+    print('Здравствуйте!\nВы желаете оставить заявку на перевозку?\nПришлите мне цифру:\n1. Да\n2. Нет')
 
     # n = 0 
     # while n < len(json_messages['messages']):
@@ -179,31 +185,35 @@ async def get_chat_messages(json_messages, last_message_direction, access_token,
                       try:
                         if prev_inner_message_direction == 'out' and first_time_message == False:
                           prev_inner_message = json_messages['messages'][n+1]['content']['text']
+                        elif prev_inner_message is not None: prev_inner_message = prev_inner_message
                         else: prev_inner_message = ' '
                         prev_inner_message_corrected = await remove_punctuation(prev_inner_message)
                         if first_time_message == True: prev_inner_message = ' '
-                      except: prev_inner_message = ' '
-                      print(prev_inner_message_corrected)
+                      except: 
+                        print(f'Error: {prev_inner_message}')
+                        prev_inner_message = prev_inner_message
+                      # print(f'Предыдущее: {prev_inner_message}')
+                      # print(f'Текущее: {inner_message}')
                     except IndexError:   
                       prev_inner_message_corrected = ' '
                       pass
                     if last_message_direction == "in":
-                      if inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет' and 'да' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет' and '1' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and '2' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес погрузки?\n1. Да\n2. Поменять адрес погрузки':
+                      if inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку?\nПришлите мне цифру:\n1. Да\n2. Нет' and 'да' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку?\nПришлите мне цифру:\n1. Да\n2. Нет' and '1' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and '2' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес погрузки? Пришлите мне цифру:\n1. Да\n2. Поменять адрес погрузки':
                         await place_start_city(access_token, user_id, user_chat_id)
                         break
-                      elif inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет' and 'нет' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет' and '2' in inner_message_corrected.lower().split():
+                      elif inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет' and 'нет' in inner_message_corrected.lower().split() or inner_message_direction == 'in' and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку?\nПришлите мне цифру:\n1. Да\n2. Нет' and '2' in inner_message_corrected.lower().split():
                         await send_message(access_token, user_id, user_chat_id, "Я жду вас в любое время. Не забудьте посетить наш сайт https://tiger-park.ru")
                         break
                       elif inner_message_direction == 'in' and prev_inner_message == "Напишите мне адрес, куда подать машину:\nСоблюдайте шаблон [Город, район(если есть), улица]":
                         await place_start_location(inner_message, access_token, user_id, user_chat_id, 0)
                         break
-                      elif inner_message_direction == 'in' and '1' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес погрузки? Пришлите мне цифру:\n1. Да\n2. Поменять адрес погрузки' or inner_message_direction == 'in' and '2' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес разгрузки?\n1. Да\n2. Поменять адрес разгрузки':
+                      elif inner_message_direction == 'in' and '1' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес погрузки?\nПришлите мне цифру:\n1. Да\n2. Поменять адрес погрузки' or inner_message_direction == 'in' and '2' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес разгрузки?\nПришлите мне цифру:\n1. Да\n2. Поменять адрес разгрузки':
                         await place_finish_city(access_token, user_id, user_chat_id)
                         break
                       elif inner_message_direction == 'in' and prev_inner_message == "Напишите мне адрес, куда отправится машина:\nСоблюдайте шаблон [Город, район(если есть), улица]":
                         await place_finish_location(inner_message, access_token, user_id, user_chat_id, 0)
                         break
-                      elif inner_message_direction == 'in' and '1' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес разгрузки? Пришлите мне цифру:\n1. Да\n2. Поменять адрес разгрузки':
+                      elif inner_message_direction == 'in' and '1' in inner_message_corrected.lower().split() and prev_inner_message == 'Это правильный адрес разгрузки?\nПришлите мне цифру:\n1. Да\n2. Поменять адрес разгрузки':
                         await place_finish_location_check(json_messages['messages'], access_token, user_id, user_chat_id)
                         await rent_time(access_token, user_id, user_chat_id)
                         break
@@ -248,10 +258,10 @@ async def get_chat_messages(json_messages, last_message_direction, access_token,
                       elif inner_message_direction == 'out' and 'вы уверены в корректности данных' in inner_message_corrected.lower():
                         global order_to_send
                         order_to_send = prev_inner_message
-                        if '1' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']) or 'да' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']).lower():
+                        if '1' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']) or 'да' in str(await remove_punctuation(json_messages['messages'][n-1]['content']['text'])).lower() or 'подтвердить' in str(await remove_punctuation(json_messages['messages'][n-1]['content']['text'])).lower():
                           await order_send(access_token, user_id, user_chat_id, order_to_send)
                           break
-                        elif '2' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']) or 'нет' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']).lower():
+                        elif '2' in await remove_punctuation(json_messages['messages'][n-1]['content']['text']) or 'нет' in str(await remove_punctuation(json_messages['messages'][n-1]['content']['text'])).lower() or 'заново' in str(await remove_punctuation(json_messages['messages'][n-1]['content']['text'])).lower():
                           await place_start_city(access_token, user_id, user_chat_id)
                           break
                         break
@@ -270,7 +280,7 @@ async def check_chat_messages(access_token, user_id, user_chat_id, json_messages
       inner_message = json_messages['messages'][n]['content']['text']
       if n < (len(json_messages['messages']) - 1):
         prev_inner_message = json_messages['messages'][n+1]['content']['text']
-      if 'да' in inner_message.lower() and prev_inner_message == 'Здравствуйте!\nВы желаете оставить заявку на перевозку? Пришлите мне цифру:\n1. Да\n2. Нет':
+      if prev_inner_message == 'Напишите мне адрес, куда подать машину:\nСоблюдайте шаблон [Город, район(если есть), улица]':
         k = n-1
         break
       else: k = n
@@ -336,11 +346,11 @@ async def check_chat_messages(access_token, user_id, user_chat_id, json_messages
           await person_check(inner_message.lower())
           print(f'Вид лица: {person}')
           pass
-        elif inner_message_direction == 'in' and prev_inner_message == 'Выберите вид расчёта. Пришлите мне цифру:\n1. Наличный\n2. Картой или по СБП':
+        elif inner_message_direction == 'in' and prev_inner_message == 'Выберите вид расчёта.\nПришлите мне цифру:\n1. Наличный\n2. Картой или по СБП':
           await payment_physycal_check(inner_message.lower())
           print(f'Вид расчёта: {payment}')
           pass
-        elif inner_message_direction == 'in' and prev_inner_message == 'Выберите вид расчёта. Пришлите мне цифру:\n1. Оплата на расчетный счет\n2. Безналичный расчет без НДС\n3. Безналичный расчет c НДС':
+        elif inner_message_direction == 'in' and prev_inner_message == 'Выберите вид расчёта.\nПришлите мне цифру:\n1. Оплата на расчетный счет\n2. Безналичный расчет без НДС\n3. Безналичный расчет c НДС':
           await payment_legal_check(inner_message.lower())
           print(f'Вид расчёта: {payment}')
           pass
@@ -374,13 +384,13 @@ async def remove_punctuation(input_string):
 
 
 # Получение access_token
-async def get_access_token():
-    global access_token, token_expire_time
+async def get_access_token(user_id):
+    global access_token
     url = 'https://api.avito.ru/token'
     data = {
         'grant_type': 'client_credentials',
-        'client_id': client_id,
-        'client_secret': client_secret,
+        'client_id': client_id[f'{user_id}'],
+        'client_secret': client_secret[f'{user_id}'],
     }
     response = requests.post(url, data=data)
     if response.status_code == 200:
@@ -388,7 +398,7 @@ async def get_access_token():
         token_expire_time = response.json()['expires_in']
         print(f'Авторизация прошла успешно\n\n{response.json()}\n')
     else:
-        print('Ошибка при авторизации:', response.text)
+          print('Ошибка при авторизации:', response.text)
 
 
 # Получение всех результатов запросов
@@ -436,11 +446,13 @@ async def main():
     global access_granted, endtime, access_token, user_chat_id
     if request.method == 'POST' and request.json['payload']['value']['type'] == 'text' or request.method == 'POST' and request.json['payload']['value']['type'] == 'location':
         await clear_lists()
+        user_id = request.json['payload']['value']['user_id']
         if access_granted == False or timer.time() > endtime:
           endtime = timer.time() + 70
-          await get_access_token()
+          await get_access_token(user_id)
           access_granted = True
         inner_message_type = request.json['payload']['value']['type']
+        # fetched_user_id = request.json['payload']['value']['user_id']
         # if inner_message_type == 'text':
         #   inner_message = request.json['payload']['value']['content']['text']
         # elif inner_message_type == 'location':
@@ -459,7 +471,7 @@ async def main():
 # Запрос адреса погрузки
 async def place_start_city(access_token, user_id, user_chat_id):
     # if last_message.lower() == "да" or message.text.lower() == "поменять адрес погрузки":
-    await send_message(access_token, user_id, user_chat_id, "Напишите мне адрес, куда подать машину:\nСоблюдайте шаблон 'Город, район(если есть), улица'")
+    await send_message(access_token, user_id, user_chat_id, "Напишите мне адрес, куда подать машину:\nСоблюдайте шаблон [Город, район(если есть), улица]")
     # elif message.text.lower() == "назад":
     #   # Возврат к началу
     #   return
@@ -482,7 +494,7 @@ async def place_start_location(inner_message, access_token, user_id, user_chat_i
       first_coord = coords
       if check == 0:
         await send_message(access_token, user_id, user_chat_id, f'Адрес погрузки:\n{first_address}')
-        await send_message(access_token, user_id, user_chat_id, 'Это правильный адрес погрузки?\n1. Да\n2. Поменять адрес погрузки')
+        await send_message(access_token, user_id, user_chat_id, 'Это правильный адрес погрузки?\nПришлите мне цифру:\n1. Да\n2. Поменять адрес погрузки')
       if "Республика" in address.split(", ")[1]:
         city_from = address.split(", ")[2]
       elif "Республика" not in address.split(", ")[1]:
@@ -495,7 +507,7 @@ async def place_start_location(inner_message, access_token, user_id, user_chat_i
 
 # Запрос адреса разгрузки
 async def place_finish_city(access_token, user_id, user_chat_id):
-  await send_message(access_token, user_id, user_chat_id, "Напишите мне адрес, куда отправится машина:\nСоблюдайте шаблон 'Город, район(если есть), улица'")
+  await send_message(access_token, user_id, user_chat_id, "Напишите мне адрес, куда отправится машина:\nСоблюдайте шаблон [Город, район(если есть), улица]")
 
 
 # Проверка адреса разгрузки
@@ -512,7 +524,7 @@ async def place_finish_location(inner_message, access_token, user_id, user_chat_
       second_coord = coords
       if check == 0:
         await send_message(access_token, user_id, user_chat_id, f'Адрес разгрузки:\n{second_address}')
-        await send_message(access_token, user_id, user_chat_id, 'Это правильный адрес разгрузки?\n1. Да\n2. Поменять адрес разгрузки')
+        await send_message(access_token, user_id, user_chat_id, 'Это правильный адрес разгрузки?\nПришлите мне цифру:\n1. Да\n2. Поменять адрес разгрузки')
       if "Республика" in address.split(", ")[1]:
         city_to = address.split(", ")[2]
       elif "Республика" not in address.split(", ")[1]:
@@ -540,11 +552,11 @@ async def place_finish_location_check(json_messages, access_token, user_id, user
     r = requests.get(url)
     soup_distance = BeautifulSoup(r.text, 'html.parser')
     token = str(soup_distance).split('"')[15]
-    print(token)
+    # print(token)
     url = f'https://api-maps.yandex.ru/services/route/2.0/?callback=id_1691434615276486510711&lang=ru_RU&token={token}&rll={str(first_coord[2]).split(" ")[0]}%2C{str(first_coord[2]).split(" ")[1]}~{str(second_coord[2]).split(" ")[0]}%2C{str(second_coord[2]).split(" ")[1]}&rtm=atm&results=1&apikey={yandex_apikey_second}'
     r = requests.get(url)
     soup_distance = BeautifulSoup(r.text, 'html.parser')
-    print(soup_distance)
+    # print(soup_distance)
     try:
       distances = str(soup_distance).split('"')[43]
       time_travel = str(soup_distance).split('"')[51]
@@ -594,7 +606,7 @@ async def rent_time_check(inner_message):
 
 # Запрос типа машины
 async def car_type(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Выберите тип машины. Пришлите мне цифру:\n1. Любая Газель\n2. Бортовая Газель\n3. Газель Пирамида\n4. Газель фургон 3м\n5. Газель фургон 4м\n6. Газель фургон 5м\n7. Грузовик свыше 1.5 тонн\n8. Грузовик свыше 5 тонн\n9. Нужна помощь\n10. Грузчики без машины')
+    await send_message(access_token, user_id, user_chat_id, 'Выберите тип машины.\nПришлите мне цифру:\n1. Любая Газель\n2. Бортовая Газель\n3. Газель Пирамида\n4. Газель фургон 3м\n5. Газель фургон 4м\n6. Газель фургон 5м\n7. Грузовик свыше 1.5 тонн\n8. Грузовик свыше 5 тонн\n9. Нужна помощь\n10. Грузчики без машины')
 
 
 # Проверка типа машины
@@ -614,8 +626,11 @@ async def car_type_check(inner_message):
         case '10': car_type = 'Грузчики без машины'
         case 'любая газель': car_type = 'Любая Газель'
         case 'любая': car_type = 'Любая Газель'
+        case 'бортовая': car_type = 'Бортовая Газель'
         case 'бортовая газель': car_type = 'Бортовая Газель'
+        case 'пирамида': car_type = 'Газель Пирамида'
         case 'газель пирамида': car_type = 'Газель Пирамида'
+        case 'газель фургон': car_type = 'Газель фургон 3м'
         case 'газель фургон 3м': car_type = 'Газель фургон 3м'
         case 'газель фургон 4м': car_type = 'Газель фургон 4м'
         case 'газель фургон 5м': car_type = 'Газель фургон 5м'
@@ -625,12 +640,13 @@ async def car_type_check(inner_message):
         case 'грузчики без машины': car_type = 'Грузчики без машины'
         case 'без машины': car_type = 'Грузчики без машины'
         case 'только грузчики': car_type = 'Грузчики без машины'
+        case 'грузчики': car_type = 'Грузчики без машины'
         case _: car_type = 'Любая Газель'
 
 
 # Запрос количества грузчиков
 async def workers(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Напишите количество грузчиков. Пришлите мне цифру:\n0. Машина без грузчиков')
+    await send_message(access_token, user_id, user_chat_id, 'Напишите количество грузчиков.\nПришлите мне цифру:\n0. Машина без грузчиков')
 
 
 # Проверка количества грузчиков
@@ -647,7 +663,7 @@ async def date(access_token, user_id, user_chat_id):
     today = datetime.date.today()
     tomorrow = today + datetime.timedelta(days=1)
     after_tomorrow = today + datetime.timedelta(days=2)
-    await send_message(access_token, user_id, user_chat_id, f"Введите удобную для вас дату. Пришлите цифру или напишите сами:\n1. Сегодня ({today.strftime('%d.%m')})\n2. Завтра ({tomorrow.strftime('%d.%m')})\n3. Послезавтра ({after_tomorrow.strftime('%d.%m')})\n4. Выберите за меня (скидка 10-25%)\n5. Пропустить\n\nОпция 'Выберите за меня' — мы сами назначим вам удобное для нас время.\n\nЗаказ после 20:00, оформляется заранее.")
+    await send_message(access_token, user_id, user_chat_id, f"Введите удобную для вас дату.\nПришлите цифру или напишите сами:\n1. Сегодня ({today.strftime('%d.%m')})\n2. Завтра ({tomorrow.strftime('%d.%m')})\n3. Послезавтра ({after_tomorrow.strftime('%d.%m')})\n4. Выберите за меня (скидка 10-25%)\n5. Пропустить\n\nОпция 'Выберите за меня' — мы сами назначим вам удобное для нас время.\n\nЗаказ после 20:00, оформляется заранее.")
 
 
 # Проверка даты
@@ -690,7 +706,7 @@ async def time_check(inner_message):
 
 # Запрос вида лица
 async def person(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Выберите вид лица. Пришлите мне цифру:\n1. Физическое\n2. Юридическое')
+    await send_message(access_token, user_id, user_chat_id, 'Выберите вид лица.\nПришлите мне цифру:\n1. Физическое\n2. Юридическое')
 
 
 # Проверка вида лица
@@ -707,12 +723,12 @@ async def person_check(inner_message):
 
 # Запрос вида оплаты для физ.лица
 async def payment_physycal(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Выберите вид расчёта. Пришлите мне цифру:\n1. Наличный\n2. Картой или по СБП')
+    await send_message(access_token, user_id, user_chat_id, 'Выберите вид расчёта.\nПришлите мне цифру:\n1. Наличный\n2. Картой или по СБП')
 
 
 # Запрос вида оплаты для юр.лица
 async def payment_legal(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Выберите вид расчёта. Пришлите мне цифру:\n1. Оплата на расчетный счет\n2. Безналичный расчет без НДС\n3. Безналичный расчет c НДС')
+    await send_message(access_token, user_id, user_chat_id, 'Выберите вид расчёта.\nПришлите мне цифру:\n1. Оплата на расчетный счет\n2. Безналичный расчет без НДС\n3. Безналичный расчет c НДС')
 
 
 # Проверка вида оплаты физ.лица
@@ -757,7 +773,7 @@ async def phone_check(inner_message):
 
 # Запрос промокода
 async def promocode(access_token, user_id, user_chat_id):
-    await send_message(access_token, user_id, user_chat_id, 'Введите промокод. Пришлите мне цифру:\n1. У меня нет промокода')
+    await send_message(access_token, user_id, user_chat_id, 'Введите промокод.\nПришлите мне цифру:\n1. У меня нет промокода')
 
 
 # Проверка промокода
@@ -772,7 +788,7 @@ async def promocode_check(inner_message):
 # Запрос доп.опций
 async def additional_options(access_token, user_id, user_chat_id, inner_message):
     if inner_message in promocodes or inner_message == '1':
-      await send_message(access_token, user_id, user_chat_id, 'Выберите один или несколько доп.параметров заказа (слитно, в строчку). Пришлите мне цифру:\n1. Упаковка\n2. Разборка мебели\n3. Вывоз хлама\n4. Мне ничего не нужно')
+      await send_message(access_token, user_id, user_chat_id, 'Выберите один или несколько доп.параметров заказа (слитно, в строчку).\nПришлите мне цифру:\n1. Упаковка\n2. Разборка мебели\n3. Вывоз хлама\n4. Мне ничего не нужно')
     else:
       await send_message(access_token, user_id, user_chat_id, 'Неверный промокод')
       await promocode(access_token, user_id, user_chat_id)
@@ -783,26 +799,27 @@ async def options_check(inner_message):
     global packing, furniture, trash
     inner_message = list(inner_message)
     if '1' in inner_message or '2' in inner_message or '3' in inner_message or '4' in inner_message:
-      match inner_message:
-        case '1': packing = "Да"
-        case '2': furniture = "Да"
-        case '3': trash = "Да"
-        case '4':
-          packing = "Нет"
-          furniture = "Нет"
-          trash = "Нет"
-        case 'упаковка': packing = "Да"
-        case 'разборка мебели': furniture = "Да"
-        case 'разбор мебели': furniture = "Да"
-        case 'вывоз хлама': trash = "Да"
-        case 'мне ничего не нужно':
-          packing = "Нет"
-          furniture = "Нет"
-          trash = "Нет"
-        case 'ничего не нужно':
-          packing = "Нет"
-          furniture = "Нет"
-          trash = "Нет"
+      for option in inner_message:
+        match option:
+          case '1': packing = "Да"
+          case '2': furniture = "Да"
+          case '3': trash = "Да"
+          case '4':
+            packing = "Нет"
+            furniture = "Нет"
+            trash = "Нет"
+          case 'упаковка': packing = "Да"
+          case 'разборка мебели': furniture = "Да"
+          case 'разбор мебели': furniture = "Да"
+          case 'вывоз хлама': trash = "Да"
+          case 'мне ничего не нужно':
+            packing = "Нет"
+            furniture = "Нет"
+            trash = "Нет"
+          case 'ничего не нужно':
+            packing = "Нет"
+            furniture = "Нет"
+            trash = "Нет"
       print(f'Выбрано {inner_message} Доп.параметры заказа: {packing}, {furniture}, {trash}')
 
 
